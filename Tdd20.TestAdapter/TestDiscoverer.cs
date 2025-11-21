@@ -13,7 +13,6 @@ namespace Tdd20.TestAdapter
 
     [DefaultExecutorUri("executor://Tdd20.TestAdapter")]
     [FileExtension(".dll")]
-    [FileExtension("dll")]
     [Category("native")]
     public class TestDiscoverer : ITestDiscoverer
     {
