@@ -1,3 +1,9 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="SampleTdd20UnitTests/SampleTdd20UnitTests.vcxproj" Id="3e3149bb-ae13-4c63-8f37-34e8fe9d08a6" />
   <Project Path="Tdd20.TestAdapter/Tdd20.TestAdapter.csproj" />
 </Solution>
