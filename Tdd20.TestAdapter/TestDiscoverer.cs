@@ -31,10 +31,7 @@ namespace Tdd20.TestAdapter
                     {
                         int hr = listAllTests(out string output); 
                         if (hr == 0)
-                        { 
-                            logger.SendMessage(TestMessageLevel.Error, $"listAllTests return S_OK. This is indeed the latest version."); 
-                            logger.SendMessage(TestMessageLevel.Error, $"the current assembly is " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name ); 
-
+                        {
                             string[] testNames = output.Split(separator, StringSplitOptions.RemoveEmptyEntries); 
                             var tests = new List<TestCase>();
                             foreach (var testname in testNames) 
