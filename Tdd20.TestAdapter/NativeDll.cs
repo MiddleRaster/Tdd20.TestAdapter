@@ -29,15 +29,6 @@ namespace Tdd20.TestAdapter
                     return (T)Marshal.GetDelegateForFunctionPointer(proc, typeof(T));
             }
             return null;
-
-            //if (_hModule == IntPtr.Zero)
-            //    return null; // the TestPlatform expect us to fail silently if there are any errors
-
-            //IntPtr proc = GetProcAddress(_hModule, name);
-            //if (proc == IntPtr.Zero)
-            //    return null;
-
-            //return (T)Marshal.GetDelegateForFunctionPointer(proc, typeof(T));
         }
 
         public void Dispose()
