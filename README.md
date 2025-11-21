@@ -1,6 +1,6 @@
-# Tdd20.TestAdapter
+## Tdd20.TestAdapter
 
-A Visual Studio Test Explorer Test Adapter for [Tdd20-style C++ unit tests](https://github.com/MiddleRaster/tdd20).
+A Visual Studio Test Explorer Test Adapter for [tdd20-style C++ unit tests](https://github.com/MiddleRaster/tdd20).
 
 ### How to use
 
