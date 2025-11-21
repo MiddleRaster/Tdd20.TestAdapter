@@ -1,0 +1,1 @@
+# Tdd20.TestAdapter
