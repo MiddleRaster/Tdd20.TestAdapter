@@ -12,9 +12,4 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="README.md" />
-    <None Include="LICENSE.md" />
-  </ItemGroup>
-
 </Project>
