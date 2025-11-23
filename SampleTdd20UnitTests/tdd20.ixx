@@ -62,9 +62,10 @@ export namespace TDD20
 		}
 	};
 
-	struct Test
+	class Test
 	{
 		inline static std::vector<std::pair<std::string, std::function<void()>>> tests;
+	public:
 		static std::pair<int, int> RunTests(auto&& matcher, auto&& out)
 		{
 			int passed = 0, failed = 0;
