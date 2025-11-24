@@ -21,6 +21,8 @@ namespace Tdd20.TestAdapter
         {
             if (sources == null) return;
 
+            TestCache.Clear();
+
             foreach (var source in sources)
             {
                 using (var proc = Process.Start(new ProcessStartInfo(source, "-dump") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true }))
@@ -31,7 +33,7 @@ namespace Tdd20.TestAdapter
                         var testCase = TestCaseMaker.Make(line, source);
                         testCase.SetPropertyValue(PropertyRegistrar.MyStringProperty, line); // hang onto string from native code
                         discoverySink.SendTestCase(testCase);
-                        TestCache.Add(source, testCase); // our cache, too.
+                        TestCache.Add(source, testCase); // add to our cache, too.
                     }
                     proc.WaitForExit();
                 }
