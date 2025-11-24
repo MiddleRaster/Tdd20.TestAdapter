@@ -1,20 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Pipes;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.Remoting.Messaging;
-using static System.Net.Mime.MediaTypeNames;
-
-
-
-
-
 
 namespace Tdd20.TestAdapter
 {    
@@ -48,22 +39,22 @@ namespace Tdd20.TestAdapter
                 string source = kvp.Key;
                 var testCases = kvp.Value;
 
-                int exitCode = 0;
+                int exitCode  = 0;
                 string output = "";
-
-                string args = string.Join(" ", testCases.Select(t => "\"" + t.GetPropertyValue(PropertyRegistrar.MyStringProperty) + "\""));
+                string args   = string.Join(" ", testCases.Select(t => "\"" + t.GetPropertyValue(PropertyRegistrar.MyStringProperty) + "\""));
                    
-                if (runContext.IsBeingDebugged) // && frameworkHandle is IFrameworkHandle2 fh2)
-                {   // Let VS own the debug session and pump events. VS launches the process under its debugger.
-                    int pid = frameworkHandle.LaunchProcessWithDebuggerAttached(filePath: source,
-                                                                    arguments: args,
-                                                                    workingDirectory: System.IO.Path.GetDirectoryName(source),
-                                                                    environmentVariables: new Dictionary<string, string>());
-                    using (var proc = Process.GetProcessById(pid))
-                    {
-                        proc.WaitForExit();
-                        exitCode = 0; // everything I tried didn't work. 0 will mean that the test was skipped, which is better than passed or failed, as that will confuse the user.
-                        // N.B.:  there is no output string from standard output. ReportResults, below, will noop.  The Test Explorer treeview will be unchanged.
+                if (runContext.IsBeingDebugged)
+                {
+                    string pipeName = "TDD20Pipe_" + Guid.NewGuid().ToString("N");
+                    using (var server = new NamedPipeServerStream(pipeName, PipeDirection.In))
+                    {   // Let VS own the debug session and pump events and launch the process under its debugger.
+                        frameworkHandle.LaunchProcessWithDebuggerAttached(filePath: source,
+                                                                          arguments: "/pipe:" + pipeName + " " + args,
+                                                                          workingDirectory: Path.GetDirectoryName(source),
+                                                                          environmentVariables: null);
+                        server.WaitForConnection();
+                        output = new StreamReader(server).ReadToEnd(); // blocks until .exe writes its one big block.
+                        exitCode = 1; // anything non-zero
                     }
                 }
                 else
@@ -86,7 +77,7 @@ namespace Tdd20.TestAdapter
                         frameworkHandle.RecordEnd   (testCase, result.Outcome);
                     }
                 } else
-                    ReportResults(output, subsetOfTests, frameworkHandle);
+                    ReportResults(output, testCases, frameworkHandle);
             }
         }
 
