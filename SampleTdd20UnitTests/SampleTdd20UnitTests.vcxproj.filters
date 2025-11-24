@@ -13,12 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Modules">
-      <UniqueIdentifier>{4c14e987-e56f-4740-adfb-ba70e068e0b5}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="YourTestsGoHere.cpp">
@@ -28,10 +25,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tdd20.ixx">
-      <Filter>Modules</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VsTdd20.ixx">
-      <Filter>Modules</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,99 +1,92 @@
 ﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.Remoting.Messaging;
+using static System.Net.Mime.MediaTypeNames;
+
+
+
+
+
 
 namespace Tdd20.TestAdapter
-{
-    [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-    internal delegate int RunSingleTestDelegate([MarshalAs(UnmanagedType.BStr)] string testName,
-                                                [MarshalAs(UnmanagedType.BStr)] out string filename,
-                                                out int line,
-                                                [MarshalAs(UnmanagedType.BStr)] out string message);
-
-    [FileExtension(".dll")]
-    [FileExtension("dll")]
+{    
+    [FileExtension(".exe")]
     [ExtensionUri("executor://Tdd20.TestAdapter")]
     public class TestExecutor : ITestExecutor
     {
-        private static readonly string[] separator = new[] { "\r\n", "\n" };
-        private bool _cancelRequested = false;
+        private bool cancelRequested = false;
 
-        public void RunTests(IEnumerable<TestCase> tests, IRunContext runContext, IFrameworkHandle frameworkHandle)
+        public void RunTests(IEnumerable<TestCase> subsetOfTests, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
-            if (tests == null || frameworkHandle == null) return;
+            if (subsetOfTests == null || frameworkHandle == null) return;
 
-            TestCase first = tests.FirstOrDefault();
-            if (first == null)
-                return;
-
-            var source = first.Source;
-            var dll = new NativeDll(source);
-            var runSingleTest = dll.GetFunction<RunSingleTestDelegate>("RunSingleTest");
-
-            try
+            // tests may be from different sources (.exes, in my case). Make a map of source to list of tests in that source.
+            var mapOfSourceToTests = new Dictionary<string, List<TestCase>>();
+            foreach (var test in subsetOfTests)
             {
-                foreach (var test in tests)
+                if (!mapOfSourceToTests.TryGetValue(test.Source, out var list))
                 {
-                    if (_cancelRequested) return;
+                    list = new List<TestCase>();
+                    mapOfSourceToTests[test.Source] = list;
+                }
+                list.Add(test);
+            }
 
-                    if (test.Source != source)
+            foreach (var kvp in mapOfSourceToTests)
+            {
+                if (cancelRequested)
+                    break;
+
+                string source = kvp.Key;
+                var testCases = kvp.Value;
+
+                int exitCode = 0;
+                string output = "";
+
+                string args = string.Join(" ", testCases.Select(t => "\"" + t.GetPropertyValue(PropertyRegistrar.MyStringProperty) + "\""));
+                   
+                if (runContext.IsBeingDebugged) // && frameworkHandle is IFrameworkHandle2 fh2)
+                {   // Let VS own the debug session and pump events. VS launches the process under its debugger.
+                    int pid = frameworkHandle.LaunchProcessWithDebuggerAttached(filePath: source,
+                                                                    arguments: args,
+                                                                    workingDirectory: System.IO.Path.GetDirectoryName(source),
+                                                                    environmentVariables: new Dictionary<string, string>());
+                    using (var proc = Process.GetProcessById(pid))
                     {
-                        dll.Dispose();
-                        source = first.Source;
-                        dll = new NativeDll(source);
-                        runSingleTest = dll.GetFunction<RunSingleTestDelegate>("RunSingleTest");
-                    }
-
-                    if (runSingleTest != null)
-                    {
-                        frameworkHandle.RecordStart(test);
-
-                        // piece the VsTest name back together again
-                        string vsTestName = test.DisplayName + '?' + test.CodeFilePath + '?' + test.LineNumber.ToString();
-                        int hr = runSingleTest(vsTestName, out string filename, out int line, out string message);
-                        if (hr != 0)
-                        {
-                            frameworkHandle.RecordEnd(test, TestOutcome.NotFound);
-                        }
-                        else if (filename == "")
-                        {
-                            TestResult result = new TestResult(test)
-                            {
-                                Outcome = TestOutcome.Passed,
-                                //Duration = TimeSpan.FromMilliseconds(5)
-                            };
-                            frameworkHandle.RecordResult(result);
-                            frameworkHandle.RecordEnd(test, TestOutcome.Passed);
-                        }
-                        else
-                        {
-                            string[] pieces = test.FullyQualifiedName.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
-
-                            // trim message
-                            message = message.Replace(" : warning unit-test: ", "");
-                            message = message.Replace(test.GetPropertyValue(PropertyRegistrar.MyStringProperty) as string, "");
-                            message = message.Replace("\"\"", "");
-                            message = message.Replace(" failed with: ", "");
-
-                            TestResult result = new TestResult(test)
-                            {
-                                Outcome = TestOutcome.Failed,
-                                //Duration = TimeSpan.FromMilliseconds(5),
-                                ErrorMessage = message,
-                                ErrorStackTrace = "   at " + pieces[0] + '.' + pieces[1] + '.' + pieces[2] + "() in " + filename + ":line " + line,
-                            };
-                            frameworkHandle.RecordResult(result);
-                            frameworkHandle.RecordEnd(test, TestOutcome.Failed);
-                        }
+                        proc.WaitForExit();
+                        exitCode = 0; // everything I tried didn't work. 0 will mean that the test was skipped, which is better than passed or failed, as that will confuse the user.
+                        // N.B.:  there is no output string from standard output. ReportResults, below, will noop.  The Test Explorer treeview will be unchanged.
                     }
                 }
-            }
-            finally
-            {
-                dll?.Dispose();
+                else
+                {
+                    using (var proc = Process.Start(new ProcessStartInfo(source, args) { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true }))
+                    {
+                        output = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit();
+                        exitCode = proc.ExitCode;
+                    }
+                }
+
+                if (exitCode == 0) // sum of passed + failed == 0 => no tests were run
+                {                  // this should never happen, but just in case, report all tests as skipped
+                    foreach(var testCase in testCases)
+                    {
+                        var result = new TestResult(testCase) { Outcome = TestOutcome.Skipped };
+                        frameworkHandle.RecordStart (testCase);
+                        frameworkHandle.RecordResult(result);
+                        frameworkHandle.RecordEnd   (testCase, result.Outcome);
+                    }
+                } else
+                    ReportResults(output, subsetOfTests, frameworkHandle);
             }
         }
 
@@ -101,34 +94,65 @@ namespace Tdd20.TestAdapter
         {
             if (sources == null || frameworkHandle == null) return;
 
-            var tests = new List<TestCase>();
+            if (TestCache.IsEmpty())
+            {   // it's possible to launch vstest.console.exe so that it doesn't call ITestDiscoverer first. Fill the TestCache ourselves
+                TestDiscoverer discoverer = new TestDiscoverer();
+                discoverer.DiscoverTests(sources, runContext, frameworkHandle, new NullObjectTestCaseDiscoverySink());
+            }
+
             foreach (var source in sources)
             {
-                using (var dll = new NativeDll(source))
+                using (var proc = Process.Start(new ProcessStartInfo(source, "") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true }))
                 {
-                    var listAllTests = dll.GetFunction<ListAllTestsDelegate>("ListAllTests");
-                    if (listAllTests != null)
-                    {
-                        int hr = listAllTests(out string output);
-                        if (hr == 0)
-                        {
-                            string[] testNames = output.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (var testname in testNames)
-                            {
-                                var testCase = TestCaseMaker.Make(testname, source);
-                                testCase.SetPropertyValue(PropertyRegistrar.MyStringProperty, testname); // hang onto string from native code
-                                tests.Add(testCase);
-                            }
-                        }
-                    }
+                    string output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
+                    ReportResults(output, TestCache.GetAll(source), frameworkHandle);
                 }
             }
-            RunTests(tests, runContext, frameworkHandle);
         }
 
-        public void Cancel()
+        public void Cancel() { cancelRequested = true; }
+
+        private void ReportResults(string output, IEnumerable<TestCase> subsetOfTests, IFrameworkHandle frameworkHandle)
         {
-            _cancelRequested = true;
+            var failedTestCases = new List<string>(output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries));
+
+            foreach (var testCase in subsetOfTests)
+            {
+                string native = testCase.GetPropertyValue(PropertyRegistrar.MyStringProperty) as string;
+
+                // Find the first failed test string that contains the native substring
+                string matchedFailure = failedTestCases.FirstOrDefault(f => f?.IndexOf(native, StringComparison.OrdinalIgnoreCase) >= 0);
+                bool isFailed = matchedFailure != null;
+
+                var result = new TestResult(testCase);
+                result.Outcome = isFailed ? TestOutcome.Failed : TestOutcome.Passed;
+                if (isFailed)
+                {
+                    string message = matchedFailure; // message is stuff past filename(##)
+                    message = message.Replace(native, "");
+                    message = message.Replace(testCase.CodeFilePath, ""); // message is stuff past filename(##)
+                    message = message.Substring(message.IndexOf(')') + 1); // get past ( + linenumber + ) part
+                    message = message.Replace(" : warning unit-test: ", "");
+                    message = message.Replace("\"\"", "");
+                    message = message.Replace(" failed with: ", "");
+                    result.ErrorMessage = message;
+
+                    string filename = matchedFailure.Substring(0, matchedFailure.IndexOf('('));
+                    int start       = matchedFailure.IndexOf('(') + 1;
+                    int end         = matchedFailure.IndexOf(')', start);
+                    int line        = int.Parse(matchedFailure.Substring(start, end - start));
+                    string[] pieces = testCase.FullyQualifiedName.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                    result.ErrorStackTrace = "   at " + pieces[0] + '.' + pieces[1] + '.' + pieces[2] + "() in " + filename + ":line " + line;
+                }
+                frameworkHandle.RecordStart(testCase);
+                frameworkHandle.RecordResult(result);
+                frameworkHandle.RecordEnd(testCase, result.Outcome);
+            }
         }
+        private class NullObjectTestCaseDiscoverySink : ITestCaseDiscoverySink
+        {
+            public void SendTestCase(TestCase discoveredTest) { }
+        };
     }
 }

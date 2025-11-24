@@ -8,6 +8,6 @@
     <File Path="README.md" />
     <File Path="license.txt" />
   </Folder>
-  <Project Path="SampleTdd20UnitTests/SampleTdd20UnitTests.vcxproj" Id="3e3149bb-ae13-4c63-8f37-34e8fe9d08a6" />
+  <Project Path="SampleTdd20UnitTests/SampleTdd20UnitTests.vcxproj" Id="d8102ef4-9286-4080-9ada-c7043da70817" />
   <Project Path="Tdd20.TestAdapter/Tdd20.TestAdapter.csproj" />
 </Solution>

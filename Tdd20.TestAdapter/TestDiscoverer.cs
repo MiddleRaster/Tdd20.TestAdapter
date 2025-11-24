@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Tdd20.TestAdapter
@@ -12,36 +13,27 @@ namespace Tdd20.TestAdapter
     internal delegate int ListAllTestsDelegate([MarshalAs(UnmanagedType.BStr)] out string output);
 
     [DefaultExecutorUri("executor://Tdd20.TestAdapter")]
-    [FileExtension(".dll")]
+    [FileExtension(".exe")]
     [Category("native")]
     public class TestDiscoverer : ITestDiscoverer
-    {
-        private static readonly string[] separator = new[] { "\r\n", "\n" };
-
+    {        
         public void DiscoverTests(IEnumerable<string> sources, IDiscoveryContext discoveryContext, IMessageLogger logger, ITestCaseDiscoverySink discoverySink)
         {
             if (sources == null) return;
 
             foreach (var source in sources)
             {
-                using (var dll = new NativeDll(source))
+                using (var proc = Process.Start(new ProcessStartInfo(source, "-dump") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true }))
                 {
-                    var listAllTests  = dll.GetFunction<ListAllTestsDelegate>("ListAllTests");
-                    if (listAllTests != null)
+                    string line;
+                    while ((line = proc.StandardOutput.ReadLine()) != null)
                     {
-                        int hr = listAllTests(out string output); 
-                        if (hr == 0)
-                        {
-                            string[] testNames = output.Split(separator, StringSplitOptions.RemoveEmptyEntries); 
-                            var tests = new List<TestCase>();
-                            foreach (var testname in testNames) 
-                            {
-                                var testCase = TestCaseMaker.Make(testname, source);
-                                testCase.SetPropertyValue(PropertyRegistrar.MyStringProperty, testname); // hang onto string from native code
-                                discoverySink.SendTestCase(testCase);
-                            }
-                        }
+                        var testCase = TestCaseMaker.Make(line, source);
+                        testCase.SetPropertyValue(PropertyRegistrar.MyStringProperty, line); // hang onto string from native code
+                        discoverySink.SendTestCase(testCase);
+                        TestCache.Add(source, testCase); // our cache, too.
                     }
+                    proc.WaitForExit();
                 }
             }
         }

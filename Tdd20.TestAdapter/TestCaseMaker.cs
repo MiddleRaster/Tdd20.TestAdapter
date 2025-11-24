@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Tdd20.TestAdapter
@@ -21,6 +22,35 @@ namespace Tdd20.TestAdapter
                 LineNumber   = line
             };
             return testCase;
+        }
+    }
+
+    internal static class TestCache
+    {
+        private static readonly Dictionary<string, List<TestCase>> map = new Dictionary<string, List<TestCase>>();
+
+        public static void Add(string source, TestCase testCase)
+        {
+            if (!map.TryGetValue(source, out var list))
+            {
+                list = new List<TestCase>();
+                map[source] = list;
+            }
+            list.Add(testCase);
+        }
+
+        public static IReadOnlyList<TestCase> GetAll(string source)
+        {
+            return map.TryGetValue(source, out var list) ? list : new List<TestCase>();
+        }
+
+        public static void Clear()
+        {
+            map.Clear();
+        }
+        public static bool IsEmpty()
+        {
+            return map.Count == 0;
         }
     }
 }
