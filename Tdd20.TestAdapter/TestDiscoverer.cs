@@ -9,9 +9,6 @@ using System.Runtime.InteropServices;
 
 namespace Tdd20.TestAdapter
 {
-    [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-    internal delegate int ListAllTestsDelegate([MarshalAs(UnmanagedType.BStr)] out string output);
-
     [DefaultExecutorUri("executor://Tdd20.TestAdapter")]
     [FileExtension(".exe")]
     [Category("native")]
