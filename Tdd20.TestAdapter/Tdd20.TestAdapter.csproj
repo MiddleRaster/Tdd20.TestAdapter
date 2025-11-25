@@ -2,14 +2,25 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>tdd20.TestAdapter</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>MiddleRaster</Authors>
+    <Company>MiddleRaster</Company>
+    <Description>Test adapter for tdd20 C++ tests</Description>
+    <PackageOutputPath>$(MSBuildProjectDrive)\LocalNugetFeed</PackageOutputPath>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.0.1" />
+    <None Include="..\README.md" Pack="true" PackagePath="" />
+    <None Include="..\LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="build\Tdd20.TestAdapter.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
 
 </Project>

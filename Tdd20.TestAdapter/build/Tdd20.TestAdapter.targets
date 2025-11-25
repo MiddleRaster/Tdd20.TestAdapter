@@ -1,0 +1,5 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <TestAdapterPath Include="$(MSBuildThisFileDirectory)..\lib\net462\Tdd20.TestAdapter.dll" />
+  </ItemGroup>
+</Project>
