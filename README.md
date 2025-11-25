@@ -7,7 +7,7 @@ A Visual Studio Test Explorer Test Adapter for [tdd20-style C++ unit tests](http
 After creating your Tdd20-style C++ unit test .exe, you can either:
 
 1. drop this tiny assembly next to it, or
-2. use the nuget package, bu installing it into your .vcxproj file (recommended).
+2. use the nuget package, by installing it into your .vcxproj file (recommended).
 
 Your tests will show up in Visual Studio's Test Explorer TreeView.
 
