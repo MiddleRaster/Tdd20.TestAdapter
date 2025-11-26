@@ -4,7 +4,7 @@ A Visual Studio Test Explorer Test Adapter for [tdd20-style C++ unit tests](http
 
 ### How to use
 
-I say, "style", because Visual Studio's Test Explorer expects a little more information about the tests than Tdd20 provides.
+I say "style" because Visual Studio's Test Explorer expects a little more information about the tests than Tdd20 provides.
 In particular, VS also wants to know what file and line number a test method *starts* on.
 That info is provided by a small module, VsTdd20.ixx; once that is imported you can write tests like this:
 
