@@ -19,5 +19,5 @@ VsTest additionalTests[] = {
     // Uncommenting the line above is a problem for VS's Test Explorer UI (but not for vstest.console.exe's UI):
 	// The two tests get merged onto a single node in the Test Explorer treeview.
 	// I could throw an exception, but that prevents the .dll from loading at all, which is confusing to the user.
-	// So I decided to write an error message write into the Test Explorer treeview. Try it out by uncommenting the last test, above.
+	// So I decided to write an error message right into the Test Explorer treeview. Try it out by uncommenting the last test, above.
 };
