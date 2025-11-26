@@ -29,9 +29,9 @@ VsTest tests[] =
 
 ```
 
-Then after having created your Tdd20-style C++ unit test `.exe`, you can either:
+Then after having created your Tdd20-style C++ unit test project, you can either:
 
-1. drop this tiny assembly next to it, or  
+1. drop this tiny assembly next to its`.exe` output, or  
 2. add the NuGet package to your C++ project (recommended).
 
 Once installed, your tests will automatically appear in Visual Studio’s Test Explorer.
