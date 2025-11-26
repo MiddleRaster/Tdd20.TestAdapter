@@ -11,9 +11,8 @@ That info is provided in a small module, VsTdd20.ixx; once that is imported you 
 ```cpp
 import std;
 import tdd20;
-using namespace TDD20;
-
 import VsTdd20;
+using namespace TDD20;
 
 VsTest tests[] =
 {
