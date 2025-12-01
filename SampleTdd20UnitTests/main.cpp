@@ -43,6 +43,8 @@ int main(int argc, char* argv[])
 			WriteFile(hPipe, output.c_str(), (DWORD)output.size(), &bytesWritten, NULL);
 			CloseHandle(hPipe);
 		}
+		return 0;
 	}
-    return passed + failed;
+	std::cout << std::format("\n{} failure(s) out of {} test(s) run\n\n", failed, passed + failed);
+	return 0;
 }

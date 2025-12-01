@@ -39,7 +39,6 @@ namespace Tdd20.TestAdapter
                 string source = kvp.Key;
                 var testCases = kvp.Value;
 
-                int exitCode  = 0;
                 string output = "";
                 string args   = string.Join(" ", testCases.Select(t => "\"" + t.GetPropertyValue(PropertyRegistrar.MyStringProperty) + "\""));
                    
@@ -54,7 +53,6 @@ namespace Tdd20.TestAdapter
                                                                           environmentVariables: null);
                         server.WaitForConnection();
                         output = new StreamReader(server).ReadToEnd(); // blocks until .exe writes its one big block.
-                        exitCode = 1; // anything non-zero
                     }
                 }
                 else
@@ -63,21 +61,9 @@ namespace Tdd20.TestAdapter
                     {
                         output = proc.StandardOutput.ReadToEnd();
                         proc.WaitForExit();
-                        exitCode = proc.ExitCode;
                     }
                 }
-
-                if (exitCode == 0) // sum of passed + failed == 0 => no tests were run
-                {                  // this should never happen, but just in case, report all tests as skipped
-                    foreach(var testCase in testCases)
-                    {
-                        var result = new TestResult(testCase) { Outcome = TestOutcome.Skipped };
-                        frameworkHandle.RecordStart (testCase);
-                        frameworkHandle.RecordResult(result);
-                        frameworkHandle.RecordEnd   (testCase, result.Outcome);
-                    }
-                } else
-                    ReportResults(output, testCases, frameworkHandle);
+                ReportResults(output, testCases, frameworkHandle);
             }
         }
 
