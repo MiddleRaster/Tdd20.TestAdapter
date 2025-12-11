@@ -5,15 +5,14 @@ import tdd20;
 export class VsTest : private TDD20::Test
 {
 	static auto StripOffLine(const std::string& name) { return name.substr(0, name.rfind('?')); };
-	static std::set<std::string>& UniqueSet() {
+	static std::set<std::string>& UniqueSet()
+	{
 		static std::set<std::string> s;
 		return s;
 	}
-
 	static std::string EnforceUniqueness(const std::string& name)
 	{
-		auto& unique = UniqueSet();
-		if (unique.insert(StripOffLine(name)).second == true)
+		if (UniqueSet().insert(StripOffLine(name)).second == true)
 			return name;
 		return "TWO TESTS WITH THE SAME NAME!  FIX IMMEDIATELY!?ERROR! ERROR! ERROR!?-1";
 	}
